@@ -120,6 +120,7 @@ def playback_trajectory_with_env(
     if action_playback:
         assert states.shape[0] == actions.shape[0]
 
+    observation_seq = []
     for i in range(traj_len):
         if action_playback:
             env.step(actions[i])
@@ -137,17 +138,23 @@ def playback_trajectory_with_env(
             env.render(mode="human", camera_name=camera_names[0])
 
         # video render
+        
         if write_video:
             if video_count % video_skip == 0:
                 video_img = []
                 for cam_name in camera_names:
-                    video_img.append(env.render(mode="rgb_array", height=512, width=512, camera_name=cam_name))
+                    obs = env.render(mode="rgb_array", height=128, width=128, camera_name=cam_name)
+                    video_img.append(obs)
+                    observation_seq.append({'agentview': obs})
                 video_img = np.concatenate(video_img, axis=1) # concatenate horizontally
+                
                 video_writer.append_data(video_img)
             video_count += 1
 
         if first:
             break
+
+    return {'observations': observation_seq}
 
 
 def playback_trajectory_with_obs(
@@ -236,12 +243,15 @@ def playback_dataset(args):
 
     # maybe reduce the number of demonstrations to playback
     if args.n is not None:
+        print(f"there are {len(demos)} in this file.")
         demos = demos[:args.n]
 
     # maybe dump video
     video_writer = None
     if write_video:
         video_writer = imageio.get_writer(args.video_path, fps=20)
+    
+    sequences = []
 
     for ind in range(len(demos)):
         ep = demos[ind]
@@ -268,20 +278,23 @@ def playback_dataset(args):
         if args.use_actions:
             actions = f["data/{}/actions".format(ep)][()]
 
-        playback_trajectory_with_env(
-            env=env, 
-            initial_state=initial_state, 
-            states=states, actions=actions, 
-            render=args.render, 
-            video_writer=video_writer, 
-            video_skip=args.video_skip,
-            camera_names=args.render_image_names,
-            first=args.first,
-        )
+        observations_seq = playback_trajectory_with_env(
+                                        env=env, 
+                                        initial_state=initial_state, 
+                                        states=states, actions=actions, 
+                                        render=args.render, 
+                                        video_writer=video_writer, 
+                                        video_skip=args.video_skip,
+                                        camera_names=args.render_image_names,
+                                        first=args.first,
+                                    )
+        sequences.append(observations_seq)
 
     f.close()
     if write_video:
         video_writer.close()
+    save_path = os.path.join('/home/mingxi/mingxi_ws/LanManip/LanManip/data/mimicgen', args.dataset.split('/')[-1].split('.')[0])
+    np.save(f'{save_path}.npy', sequences)
 
 
 if __name__ == "__main__":
