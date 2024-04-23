@@ -24,6 +24,13 @@ Args:
 
     copy_dones (bool): if provided, copy dones from source file instead of inferring them
 
+    depth (bool): output depth observations
+
+    voxel (bool): output voxel observations in npy file
+
+
+    
+
 Example usage:
     
     # extract low-dimensional observations
@@ -221,6 +228,10 @@ def dataset_states_to_obs(args):
         use_depth_obs=args.depth,
     )
 
+    if args.voxel:
+        #TODO
+        pass
+
     print("==== Using environment with the following metadata ====")
     print(json.dumps(env.serialize(), indent=4))
     print("")
@@ -264,7 +275,7 @@ def dataset_states_to_obs(args):
             actions=actions,
             done_mode=args.done_mode,
             camera_names=args.camera_names, 
-            camera_height=args.camera_height, 
+            camera_height=args.camera_height,
             camera_width=args.camera_width,
         )
 
@@ -379,6 +390,12 @@ if __name__ == "__main__":
         "--depth", 
         action='store_true',
         help="(optional) use depth observations for each camera",
+    )
+
+    parser.add_argument(
+        "--voxel",
+        action='store_true',
+        help='(optional) store output as voxels in npy file; --depth flag must be included'
     )
 
     # specifies how the "done" signal is written. If "0", then the "done" signal is 1 wherever 
