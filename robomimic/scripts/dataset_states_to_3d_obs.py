@@ -53,6 +53,11 @@ Example usage:
     # use dense rewards, and only annotate the end of trajectories with done signal
     python dataset_states_to_obs.py --dataset /path/to/demo.hdf5 --output_name image_dense_done_1.hdf5 \
         --done_mode 1 --dense --camera_names agentview robot0_eye_in_hand --camera_height 84 --camera_width 84
+
+
+Example for 3d testing:
+
+python dataset_states_to_3d_obs.py --dataset /home/yilong/Documents/mimicgen_environments/datasets/core/hammer_cleanup_d0.hdf5 --output_name test.hdf5 --done_mode 2 --camera_names agentview robot0_eye_in_hand --camera_height 84 --camera_width 84 --depth
 """
 import os
 import json
@@ -244,6 +249,10 @@ def dataset_states_to_obs(args):
     demos = list(f["data"].keys())
     inds = np.argsort([int(elem[5:]) for elem in demos])
     demos = [demos[i] for i in inds]
+
+    print(f.keys())
+
+    exit(0)
 
     # maybe reduce the number of demonstrations to playback
     if args.n is not None:
