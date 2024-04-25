@@ -150,7 +150,7 @@ def dataset_states_to_obs(args):
     env_meta = FileUtils.get_env_metadata_from_dataset(dataset_path=args.dataset)
     env = EnvUtils.create_env_for_data_processing(
         env_meta=env_meta,
-        camera_names=args.camera_names, 
+        camera_names=['birdview', 'agentview', 'sideview', 'robot0_eye_in_hand'], 
         camera_height=args.camera_height, 
         camera_width=args.camera_width, 
         reward_shaping=args.shaped,
