@@ -522,3 +522,44 @@ class EnvRobosuite(EB.EnvBase):
         Pretty-print env description.
         """
         return self.name + "\n" + json.dumps(self._init_kwargs, sort_keys=True, indent=4)
+    
+
+    def get_camera_info(
+        self,
+        camera_names=None, 
+        camera_height=84, 
+        camera_width=84,
+    ):
+        """
+        Helper function to get camera intrinsics and extrinsics for cameras being used for observations.
+        """
+
+        # TODO: make this function more general than just robosuite environments
+
+        if camera_names is None:
+            return None
+
+        camera_info = dict()
+        for cam_name in camera_names:
+            K = get_camera_intrinsic_matrix(self.env.sim, camera_name=cam_name, camera_height=camera_height, camera_width=camera_width)
+            R = get_camera_extrinsic_matrix(self.env.sim, camera_name=cam_name) # camera pose in world frame
+            if "eye_in_hand" in cam_name:
+                # convert extrinsic matrix to be relative to robot eef control frame
+                assert cam_name.startswith("robot0")
+                eef_site_name = self.env.robots[0].controller.eef_name
+                eef_pos = np.array(self.env.sim.data.site_xpos[self.env.sim.model.site_name2id(eef_site_name)])
+                eef_rot = np.array(self.env.sim.data.site_xmat[self.env.sim.model.site_name2id(eef_site_name)].reshape([3, 3]))
+                eef_pose = np.zeros((4, 4)) # eef pose in world frame
+                eef_pose[:3, :3] = eef_rot
+                eef_pose[:3, 3] = eef_pos
+                eef_pose[3, 3] = 1.0
+                eef_pose_inv = np.zeros((4, 4))
+                eef_pose_inv[:3, :3] = eef_pose[:3, :3].T
+                eef_pose_inv[:3, 3] = -eef_pose_inv[:3, :3].dot(eef_pose[:3, 3])
+                eef_pose_inv[3, 3] = 1.0
+                R = R.dot(eef_pose_inv) # T_E^W * T_W^C = T_E^C
+            camera_info[cam_name] = dict(
+                intrinsics=K.tolist(),
+                extrinsics=R.tolist(),
+            )
+        return camera_info

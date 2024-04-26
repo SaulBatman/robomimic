@@ -55,6 +55,31 @@ import robomimic.utils.file_utils as FileUtils
 import robomimic.utils.env_utils as EnvUtils
 from robomimic.envs.env_base import EnvBase
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+def visualize_voxel(traj):
+    
+    np_voxels = traj['obs']['voxels'][0]
+    #occupancy = traj['obs']['voxels'][0][0,:,:,:]
+    #indices = np.argwhere(occupancy == 1)[0]
+
+    # Create a 3D plot
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    indices = np.argwhere(np_voxels[0] != 0)
+    colors = np_voxels[1:, indices[:, 0], indices[:, 1], indices[:, 2]].T
+
+    ax.scatter(indices[:, 0], indices[:, 1], indices[:, 2], c=colors/255., marker='s')
+
+    # Set labels and show the plot
+    ax.set_xlabel('X Axis')
+    ax.set_ylabel('Y Axis')
+    ax.set_zlabel('Z Axis')
+    ax.set_xlim(0, 64)
+    ax.set_ylim(0, 64)
+    ax.set_zlim(0, 64)  
 
 def extract_trajectory(
     env, 
@@ -82,6 +107,8 @@ def extract_trajectory(
     # load the initial state
     env.reset()
     obs = env.reset_to(initial_state)
+
+    
 
     traj = dict(
         obs=[], 
@@ -148,9 +175,10 @@ def extract_trajectory(
 def dataset_states_to_obs(args):
     # create environment to use for data processing
     env_meta = FileUtils.get_env_metadata_from_dataset(dataset_path=args.dataset)
+    camera_names = ['birdview', 'agentview', 'sideview', 'robot0_eye_in_hand']
     env = EnvUtils.create_env_for_data_processing(
         env_meta=env_meta,
-        camera_names=['birdview', 'agentview', 'sideview', 'robot0_eye_in_hand'], 
+        camera_names=camera_names, 
         camera_height=args.camera_height, 
         camera_width=args.camera_width, 
         reward_shaping=args.shaped,
@@ -162,6 +190,13 @@ def dataset_states_to_obs(args):
 
     # some operations for playback are robosuite-specific, so determine if this environment is a robosuite env
     is_robosuite_env = EnvUtils.is_robosuite_env(env_meta)
+    camera_info = None
+    if is_robosuite_env:
+        camera_info = env.get_camera_info(
+            camera_names=camera_names, 
+            camera_height=args.camera_height, 
+            camera_width=args.camera_width,
+        )
 
     # list of all demonstration episodes (sorted in increasing number order)
     f = h5py.File(args.dataset, "r")
@@ -189,7 +224,7 @@ def dataset_states_to_obs(args):
         initial_state = dict(states=states[0])
         if is_robosuite_env:
             initial_state["model"] = f["data/{}".format(ep)].attrs["model_file"]
-
+            
         # extract obs, rewards, dones
         actions = f["data/{}/actions".format(ep)][()]
         traj = extract_trajectory(
@@ -199,6 +234,8 @@ def dataset_states_to_obs(args):
             actions=actions,
             done_mode=args.done_mode,
         )
+
+        # visualize_voxel(traj)
 
         # maybe copy reward or done signal from source file
         if args.copy_rewards:
