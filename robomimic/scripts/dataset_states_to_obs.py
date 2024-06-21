@@ -135,7 +135,7 @@ def extract_trajectory(
     insert_index = find_index_after_pattern(initial_state['model'], pattern, after_pattern) + 1
 
     new_cameras_xml =  '''<camera mode="fixed" name="sideview2" pos="-0.05651774593317116 -1.5 1.4879572214102434" quat="-0.009905065491771751 0.006877963156909582 0.5912228352893879 -0.806418094001364" />\n    
-                    <camera mode="fixed" name="backview" pos="-1.9 0 1.45" quat="-0.56 -0.43 0.43 0.56" />\n'''
+                    <camera mode="fixed" name="backview" pos="-1.5 0 1.45" quat="-0.56 -0.43 0.43 0.56" />\n'''
 
     initial_state['model'] = initial_state['model'][:insert_index] + new_cameras_xml + initial_state['model'][insert_index:]
 

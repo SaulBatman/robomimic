@@ -255,7 +255,7 @@ class EnvRobosuite(EB.EnvBase):
             #     [center[0] + ws_size/2, center[1] + ws_size/2, center[2] - 0.05 + ws_size],
             # ])
             voxel_bound = workspace.T
-            voxel_size = 320
+            voxel_size = 32
 
             all_pcds = o3d.geometry.PointCloud()
             for cam_idx, camera_name in enumerate(self.env.camera_names):
