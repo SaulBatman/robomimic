@@ -171,11 +171,34 @@ def extract_trajectory(
 
     return traj
 
+def preprocess_depth(traj, cam_name, depth_minmax):
+    # depths.shape = (N, H, W, C)
+    minmax = depth_minmax[cam_name]
+    minmax_range = minmax[1] - minmax[0]
+    ndepths =(np.clip(traj['obs'][f'{cam_name}_depth'], minmax[0], minmax[1]) - minmax[0]) / minmax_range * 255
+    return ndepths.astype(np.uint8)
+
+def add_rgbd_obs(traj, camera_names, depth_minmax):
+    for cam_name in camera_names:
+        traj['obs'][f'{cam_name}_rgbd'] = np.concatenate([traj['obs'][f'{cam_name}_image'],
+                                                          preprocess_depth(traj, cam_name, depth_minmax)],
+                                                            axis=3)
+        traj['next_obs'][f'{cam_name}_rgbd'] = np.concatenate([traj['next_obs'][f'{cam_name}_image'],
+                                                            preprocess_depth(traj, cam_name, depth_minmax)],
+                                                            axis=3)
+        del traj['obs'][f'{cam_name}_depth']
+        del traj['next_obs'][f'{cam_name}_depth']
+    return traj
 
 def dataset_states_to_obs(args):
     # create environment to use for data processing
     env_meta = FileUtils.get_env_metadata_from_dataset(dataset_path=args.dataset)
     camera_names = ['birdview', 'agentview', 'sideview', 'robot0_eye_in_hand']
+    depth_minmax = {'birdview': [1.180, 2.180],
+                    'agentview': [0.1, 1.1],
+                    'sideview': [1.0, 2.0],
+                    'robot0_eye_in_hand': [0., 1.0],
+                    }
     env = EnvUtils.create_env_for_data_processing(
         env_meta=env_meta,
         camera_names=camera_names, 
@@ -236,6 +259,8 @@ def dataset_states_to_obs(args):
         )
 
         # visualize_voxel(traj)
+        traj = add_rgbd_obs(traj, camera_names, depth_minmax)
+        
 
         # maybe copy reward or done signal from source file
         if args.copy_rewards:

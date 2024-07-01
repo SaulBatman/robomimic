@@ -103,6 +103,73 @@ def register_all_links():
         link="http://downloads.cs.stanford.edu/downloads/rt_benchmark/can/paired/low_dim_v141.hdf5")
     register_dataset_link(task="can", dataset_type="paired", hdf5_type="image", horizon=400,
         link=None)
+    
+    #MIMICGEN
+    ### source human datasets used to generate all data ###
+    dataset_type = "source"
+
+    # info for each dataset (name, evaluation horizon, link)
+    dataset_infos = [
+        ("hammer_cleanup", 500, "https://drive.google.com/file/d/15EENNeAjm0nhaA2DxszUfvKBbm7tMKP8/view?usp=drive_link"),
+        ("kitchen", 800, "https://drive.google.com/file/d/15OSYVQBKWjA_0Qb7vgSJxg0ePk5tPGHO/view?usp=drive_link"),
+        ("coffee", 400, "https://drive.google.com/file/d/15LLftHGAzKw-t--KmA4Q9esNxSef8lmI/view?usp=drive_link"),
+        ("coffee_preparation", 800, "https://drive.google.com/file/d/15KlgnIurTeHsUakHvWixVXtA7Bh7A6Gt/view?usp=drive_link"),
+        ("nut_assembly", 500, "https://drive.google.com/file/d/150oTa-yEHxSsOduiiai0CpQ1pfPY14PF/view?usp=drive_link"),
+        ("mug_cleanup", 500, "https://drive.google.com/file/d/15JHCOZabMN6XBHj_cXsS0QPPsJeQiPAN/view?usp=drive_link"),
+        ("pick_place", 1000, "https://drive.google.com/file/d/15U2_Qm9y8CQ3HF6c-HbVJMtyEdeEccZv/view?usp=drive_link"),
+        ("square", 400, "https://drive.google.com/file/d/15CCPUGukZqJmFoFRDYDadu7lIVot_2hC/view?usp=drive_link"),
+        ("stack", 400, "https://drive.google.com/file/d/1519sVqkLD6PlI2pir8yjCpyogX1PfjUP/view?usp=drive_link"),
+        ("stack_three", 400, "https://drive.google.com/file/d/151ur_DIhO2Nlp3ipnKuQlcVK_IkE2Ago/view?usp=drive_link"),
+        ("threading", 400, "https://drive.google.com/file/d/15CzLAf_tAjwWnAFIaWsiyoPNYb3m84IK/view?usp=drive_link"),
+        ("three_piece_assembly", 500, "https://drive.google.com/file/d/159aWGouuiKOsf8YblSR5Lkfq9d1aCVCV/view?usp=drive_link"),
+    ]
+    for task, horizon, link in dataset_infos:
+        register_dataset_link(
+            dataset_type=dataset_type,
+            task=task,
+            horizon=horizon,
+            link=link,
+            hdf5_type="image",
+        )
+
+    ### core generated datasets ###
+    dataset_type = "core"
+    dataset_infos = [
+        ("hammer_cleanup_d0", 500, "https://drive.google.com/file/d/1uLQSFqTiRquUbe3NprHSCVhLyOqjjrVR/view?usp=drive_link"),
+        ("hammer_cleanup_d1", 500, "https://drive.google.com/file/d/1YL-cSs9dC3lsA3LxQVZ0w98ijTnSdbSH/view?usp=drive_link"),
+        ("kitchen_d0", 800, "https://drive.google.com/file/d/1RPu6xTx8SFL5k9XpYUoR8Y5eZsbhqojj/view?usp=drive_link"),
+        ("kitchen_d1", 800, "https://drive.google.com/file/d/12X7p60JpDkyD4Ia8gjn0qn6VNy7RFuLX/view?usp=drive_link"),
+        ("coffee_d0", 400, "https://drive.google.com/file/d/1-0gQILd2jkhiOqTuh_bpP8wnidHrZXr2/view?usp=drive_link"),
+        ("coffee_d1", 400, "https://drive.google.com/file/d/1rsOhOzlJnimXxGM9Oi7S9by1UpgSrdQK/view?usp=drive_link"),
+        ("coffee_d2", 400, "https://drive.google.com/file/d/11X2d6WsRq1rQZzxTD9Gd23562VQ0k7OW/view?usp=drive_link"),
+        ("coffee_preparation_d0", 800, "https://drive.google.com/file/d/1OsEvnTHDQDzsfjkkt6IFU3QDFOT1OGGd/view?usp=drive_link"),
+        ("coffee_preparation_d1", 800, "https://drive.google.com/file/d/1trJlVyq9xTRARHBOMi8TOcxLDi804AN3/view?usp=drive_link"),
+        ("nut_assembly_d0", 500, "https://drive.google.com/file/d/1N3Q2NJwn-Wt4OBS8Q04mit92uqrOxqBV/view?usp=drive_link"),
+        ("mug_cleanup_d0", 500, "https://drive.google.com/file/d/1VV2PkvlTT0fGmc6MwwJR8bAtop0hpjIJ/view?usp=drive_link"),
+        ("mug_cleanup_d1", 500, "https://drive.google.com/file/d/1bxJyN2c2yZsgn2FOGWFJsxlgHXWD3eiI/view?usp=drive_link"),
+        ("pick_place_d0", 1000, "https://drive.google.com/file/d/1usOS0sbtmD0wB0L8KhxSjxo6uUmKNT60/view?usp=drive_link"),
+        ("square_d0", 400, "https://drive.google.com/file/d/1FFMWZPzliM4QoiBxbuU69DGfZ4rmt9LL/view?usp=drive_link"),
+        ("square_d1", 400, "https://drive.google.com/file/d/1LJfdITKFQTfPmETVVUjj9YTwiFcmDleZ/view?usp=drive_link"),
+        ("square_d2", 400, "https://drive.google.com/file/d/1X8KCL1eSLT0aieIbFFWOMDb3H2z_czv5/view?usp=drive_link"),
+        ("stack_d0", 400, "https://drive.google.com/file/d/1ZhPBfglfashd8yVwtb4HpDjcxHj_8oAX/view?usp=drive_link"),
+        ("stack_d1", 400, "https://drive.google.com/file/d/1yw9XvvRm4WIsxsFVSR0MOuhM_VgvVdPw/view?usp=drive_link"),
+        ("stack_three_d0", 400, "https://drive.google.com/file/d/1AzuUPtC8K5ZKiuvKAJ3UJ-by1UJqWeLX/view?usp=drive_link"),
+        ("stack_three_d1", 400, "https://drive.google.com/file/d/1PawNzhGCroHdU-4Rl3ZoC7N-6Fj_fErS/view?usp=drive_link"),
+        ("threading_d0", 400, "https://drive.google.com/file/d/1JYIIwRE31ulUYDV0BqrvnzBWzLiVqcKb/view?usp=drive_link"),
+        ("threading_d1", 400, "https://drive.google.com/file/d/1t2Aduv9yic23RlKXg2vryV9jCLwaoFqu/view?usp=drive_link"),
+        ("threading_d2", 400, "https://drive.google.com/file/d/1FUKnUN746m9C7-ReA-o2s58Y8eRyL0oY/view?usp=drive_link"),
+        ("three_piece_assembly_d0", 500, "https://drive.google.com/file/d/1xyTJcrNagEk57Wdoq1YMxnja7ljZC9JW/view?usp=drive_link"),
+        ("three_piece_assembly_d1", 500, "https://drive.google.com/file/d/1HLz9RstJvwkzxUphK2SC9_k_ijv6qFMj/view?usp=drive_link"),
+        ("three_piece_assembly_d2", 500, "https://drive.google.com/file/d/1v59INEmTaMdyiivD3n37J-Oe81xBtQrQ/view?usp=drive_link"),
+    ]
+    for task, horizon, link in dataset_infos:
+        register_dataset_link(
+            dataset_type=dataset_type,
+            task=task,
+            horizon=horizon,
+            link=link,
+            hdf5_type="image",
+        )
 
 
 def register_momart_dataset_link(task, dataset_type, link, dataset_size):

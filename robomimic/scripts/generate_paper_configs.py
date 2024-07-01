@@ -25,6 +25,7 @@ from robomimic import DATASET_REGISTRY
 from robomimic.config import Config, BCConfig, BCQConfig, CQLConfig, HBCConfig, IRISConfig, config_factory
 
 
+
 def modify_config_for_default_low_dim_exp(config):
     """
     Modifies a Config object with experiment, training, and observation settings that
@@ -356,7 +357,7 @@ def modify_bc_config_for_dataset(config, task_name, dataset_type, hdf5_type):
     """
     assert isinstance(config, BCConfig), "must be BCConfig"
     assert config.algo_name == "bc", "must be BCConfig"
-    assert dataset_type in ["ph", "mh", "mg", "paired"], "invalid dataset type"
+    assert dataset_type in ["ph", "mh", "mg", "paired", "source", "core"], "invalid dataset type"
     is_real_dataset = "real" in task_name
     if not is_real_dataset:
         assert hdf5_type != "raw", "cannot train on raw demonstrations"

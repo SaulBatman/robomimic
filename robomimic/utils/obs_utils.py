@@ -44,6 +44,20 @@ OBS_MODALITY_CLASSES = {}
 OBS_ENCODER_CORES = {"None": None}          # Include default None
 OBS_RANDOMIZERS = {"None": None}            # Include default None
 
+DEPTH_MINMAX = {'birdview_depth': [1.180, 2.480],
+                'agentview_depth': [0.1, 1.1],
+                'sideview_depth': [1.0, 2.0],
+                'robot0_eye_in_hand_depth': [0., 1.0],
+                }
+
+def discretize_depth(depth, cam_name):
+    # input a true depth and discretize to [0,255]
+    # depths.shape = (N, H, W, C)
+    assert cam_name in DEPTH_MINMAX.keys(), "you need add depth_minmax in env_robosuite.py"
+    minmax = DEPTH_MINMAX[cam_name]
+    minmax_range = minmax[1] - minmax[0]
+    ndepths =(np.clip(depth, minmax[0], minmax[1]) - minmax[0]) / minmax_range * 255
+    return ndepths.astype(np.uint8)
 
 def register_obs_key(target_class):
     assert target_class not in OBS_MODALITY_CLASSES, f"Already registered modality {target_class}!"
@@ -916,7 +930,9 @@ class DepthModality(Modality):
         Returns:
             processed_obs (np.array or torch.Tensor): processed depth
         """
-        return process_frame(frame=obs, channel_dim=1, scale=1.)
+        # assume a [0,255] discretized depth input
+        scale = 255.
+        return process_frame(frame=obs, channel_dim=1, scale=scale)
 
     @classmethod
     def _default_obs_unprocessor(cls, obs):
@@ -931,7 +947,9 @@ class DepthModality(Modality):
             unprocessed_obs (np.array or torch.Tensor): depth passed through
                 inverse operation of @process_depth
         """
-        return unprocess_frame(frame=obs, channel_dim=1, scale=1.)
+        # assume a [0,255] discretized depth input
+        scale = 255.
+        return unprocess_frame(frame=obs, channel_dim=1, scale=scale)
 
 
 class ScanModality(Modality):

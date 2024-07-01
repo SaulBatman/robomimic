@@ -26,6 +26,9 @@ try:
 except ImportError:
     MUJOCO_EXCEPTIONS = []
 
+from robomimic.utils.obs_utils import DEPTH_MINMAX, discretize_depth
+
+
 
 def depth2fgpcd(depth, mask, cam_params):
     # depth: (h, w)
@@ -235,11 +238,14 @@ class EnvRobosuite(EB.EnvBase):
             if (k in ObsUtils.OBS_KEYS_TO_MODALITIES) and ObsUtils.key_is_obs_modality(key=k, obs_modality="depth"):
                 ret[k] = di[k][::-1]
                 ret[k] = get_real_depth_map(self.env.sim, ret[k])
+                ret[k] = discretize_depth(ret[k], k)
                 if self.postprocess_visual_obs:
                     ret[k] = ObsUtils.process_obs(obs=ret[k], obs_key=k)
 
         # "object" key contains object information
         ret["object"] = np.array(di["object-state"])
+        for cam in self.env.camera_names:
+            ret[f"{cam}_rgbd"] = np.concatenate([ret[f"{cam}_image"], ret[f"{cam}_depth"]], axis=0)
 
         if self.env.use_camera_obs:
             center = np.array([0, 0, 0.7])
