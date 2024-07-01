@@ -96,7 +96,6 @@ def get_env_metadata_from_dataset(dataset_path):
             :`'type'`: type of environment, should be a value in EB.EnvType
             :`'env_kwargs'`: dictionary of keyword arguments to pass to environment constructor
     """
-    dataset_path = os.path.expanduser(dataset_path)
     f = h5py.File(dataset_path, "r")
     env_meta = json.loads(f["data"].attrs["env_args"])
     f.close()

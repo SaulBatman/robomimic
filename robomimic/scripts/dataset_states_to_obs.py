@@ -43,6 +43,11 @@ Example usage:
     python dataset_states_to_obs.py --dataset /path/to/demo.hdf5 --output_name image_dense_done_1.hdf5 \
         --done_mode 1 --dense --camera_names agentview robot0_eye_in_hand --camera_height 84 --camera_width 84
 """
+
+
+'''
+python dataset_states_to_obs.py --dataset /home/yilong/Documents/mimicgen_envs/datasets/core/square_d0.hdf5 --output_name /home/yilong/Documents/mimicgen_envs/datasets/core/data.hdf5
+'''
 import os
 import json
 import h5py
@@ -57,6 +62,20 @@ from robomimic.envs.env_base import EnvBase
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+
+def find_index_after_pattern(text, pattern, after_pattern):
+        # Find the index of the first occurrence of after_pattern
+        start_index = text.find(after_pattern)
+        if start_index == -1:
+            return -1
+        
+        # Search for pattern after the start_index
+        index_after_pattern = text.find(pattern, start_index)
+        if index_after_pattern == -1:
+            return -1
+        
+        # Return the index after the pattern
+        return index_after_pattern + len(pattern)
 
 def visualize_voxel(traj):
     
@@ -80,6 +99,8 @@ def visualize_voxel(traj):
     ax.set_xlim(0, 64)
     ax.set_ylim(0, 64)
     ax.set_zlim(0, 64)  
+
+    plt.show()
 
 def extract_trajectory(
     env, 
@@ -106,6 +127,18 @@ def extract_trajectory(
 
     # load the initial state
     env.reset()
+    # xml_with_added_cameras = env.env.model.get_xml() # This xml file (/robosuite/robosuite/models/assets/arenas/pegs_arena.xml
+    
+    pattern = '/>\n'
+    after_pattern = 'camera name="sideview"'
+
+    insert_index = find_index_after_pattern(initial_state['model'], pattern, after_pattern) + 1
+
+    new_cameras_xml =  '''<camera mode="fixed" name="sideview2" pos="-0.05651774593317116 -1.5 1.4879572214102434" quat="-0.009905065491771751 0.006877963156909582 0.5912228352893879 -0.806418094001364" />\n    
+                    <camera mode="fixed" name="backview" pos="-1.5 0 1.45" quat="-0.56 -0.43 0.43 0.56" />\n'''
+
+    initial_state['model'] = initial_state['model'][:insert_index] + new_cameras_xml + initial_state['model'][insert_index:]
+
     obs = env.reset_to(initial_state)
 
     
@@ -193,12 +226,8 @@ def add_rgbd_obs(traj, camera_names, depth_minmax):
 def dataset_states_to_obs(args):
     # create environment to use for data processing
     env_meta = FileUtils.get_env_metadata_from_dataset(dataset_path=args.dataset)
-    camera_names = ['birdview', 'agentview', 'sideview', 'robot0_eye_in_hand']
-    depth_minmax = {'birdview': [1.180, 2.180],
-                    'agentview': [0.1, 1.1],
-                    'sideview': [1.0, 2.0],
-                    'robot0_eye_in_hand': [0., 1.0],
-                    }
+    camera_names = ['frontview', 'birdview', 'agentview', 'sideview', 'robot0_eye_in_hand', 'sideview2', 'backview']
+
     env = EnvUtils.create_env_for_data_processing(
         env_meta=env_meta,
         camera_names=camera_names, 
@@ -259,8 +288,8 @@ def dataset_states_to_obs(args):
         )
 
         # visualize_voxel(traj)
-        traj = add_rgbd_obs(traj, camera_names, depth_minmax)
-        
+
+
 
         # maybe copy reward or done signal from source file
         if args.copy_rewards:

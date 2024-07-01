@@ -1,0 +1,17 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "name": "dataset_states_to_obs",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "robomimic/scripts/dataset_states_to_obs.py",
+            "console": "integratedTerminal",
+            "args": ["--dataset=/home/yilong/Documents/mimicgen_envs/datasets/core/square_d0.hdf5", "--output_name=/home/yilong/Documents/mimicgen_envs/datasets/core/data.hdf5"]
+        },
+    ]
+}
