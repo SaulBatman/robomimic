@@ -420,7 +420,8 @@ class EnvRobosuite(EB.EnvBase):
                 if self.postprocess_visual_obs:
                     ret[k] = ObsUtils.process_obs(obs=ret[k], obs_key=k)
                     # ret[k] = clip_depth(ret[k])
-
+            if (k in ObsUtils.OBS_KEYS_TO_MODALITIES) and ObsUtils.key_is_obs_modality(key=k, obs_modality="low_dim"):
+                ret[k] = di[k].astype(np.float32)
 
         # "object" key contains object information
         ret["object"] = np.array(di["object-state"])
@@ -487,7 +488,7 @@ class EnvRobosuite(EB.EnvBase):
                 #----------- get raw pcd without robot-----------------
                 seg = di[f'{camera_name}_segmentation_instance'][::-1][...,-1]
                 robot_id = [seg.max(), seg.max()-1, seg.max()-2]  # robot is always the last 3 ids
-                robot = (seg == robot_id[0]) | enlarge_mask(seg == robot_id[1], kernel_size=2) | (seg == robot_id[2])
+                robot = (seg == robot_id[0]) | enlarge_mask(seg == robot_id[1], kernel_size=3) | (seg == robot_id[2])
                 # robot = ((seg == robot_id[0]) | (seg == robot_id[1]) | (seg == robot_id[2]))
 
                 depth_no_robot = depth.copy()
@@ -552,10 +553,15 @@ class EnvRobosuite(EB.EnvBase):
                 np_pcd = np_pcd[np_pcd[:,2]>pcd_z_min]
                 np_pcd_se3_rel = localize_pcd_batch(np_pcd[None,...], eef_pos, local_type='xyz')[0]
                 ret['pcd'] = crop_pcd(np_pcd, input_type='absolute')
+                # ret['is_contact'] = np.array([False]) # placeholder
                 # ret['pcd_t3'] = crop_pcd(np_pcd_se3_rel, input_type='relative')
                 # ret['local_pcd_t3'] = crop_pcd(np_pcd_se3_rel, input_type='gripper')
                 # ret['local_pcd_se3'] = crop_pcd(localize_pcd_batch(np_pcd[None,...], eef_pos, local_type='se3')[0], input_type='gripper_se3')
-                # print(1)
+
+                # color_geco = render_pcd_from_pose(eef_pos, di['robot0_gripper_qpos'], 1024, 'color_sphere')
+                # np_pcd_no_robot = o3d2np(all_pcds_no_robot)
+                # pcd_render = np.concatenate([np_pcd_no_robot, color_geco], axis=0)
+                # ret['render_pcd'] = crop_pcd(pcd_render, input_type='absolute')
 
 
             
