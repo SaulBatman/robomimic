@@ -120,7 +120,7 @@ def get_pcd_z_min(task_name, table_offset):
     elif task_name.startswith('Kitchen'):
         pcd_z_min = table_offset[2] 
     else:
-        pcd_z_min = 0.815
+        pcd_z_min = 0.82
     return pcd_z_min
 
 def enlarge_mask(binary_mask, kernel_size, iterations=1):
