@@ -119,6 +119,8 @@ def get_pcd_z_min(task_name, table_offset):
         pcd_z_min = 0.835
     elif task_name.startswith('Kitchen'):
         pcd_z_min = table_offset[2] 
+    elif task_name.startswith('HammerCleanup'):
+        pcd_z_min = 0.92
     else:
         pcd_z_min = 0.82
     return pcd_z_min
