@@ -82,6 +82,13 @@ def visualize_pcds(points: list, mode='color'):
     origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.1, origin=[0, 0, 0])
     o3d.visualization.draw_geometries([*pcds, origin])
 
+def save_pcd(points, filename='pcd.ply'):
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points[:,:3])
+    if points.shape[1] >= 6:
+        pcd.colors = o3d.utility.Vector3dVector(points[:,3:6])
+    o3d.io.write_point_cloud(filename, pcd)
+
 def apply_se3_pcd_transform(points, transform):
     """
     Apply SE3 transformation to a set of points.
@@ -417,14 +424,17 @@ class EnvRobosuite(EB.EnvBase):
             if (k in ObsUtils.OBS_KEYS_TO_MODALITIES) and ObsUtils.key_is_obs_modality(key=k, obs_modality="depth"):
                 ret[k] = di[k][::-1]
                 ret[k] = get_real_depth_map(self.env.sim, ret[k])
-                if self.postprocess_visual_obs:
-                    ret[k] = ObsUtils.process_obs(obs=ret[k], obs_key=k)
                     # ret[k] = clip_depth(ret[k])
             if (k in ObsUtils.OBS_KEYS_TO_MODALITIES) and ObsUtils.key_is_obs_modality(key=k, obs_modality="low_dim"):
                 ret[k] = di[k].astype(np.float32)
+            if "_segmentation_" in k:
+                ret[k] = di[k][::-1]
 
         # "object" key contains object information
-        ret["object"] = np.array(di["object-state"])
+        try:
+            ret["object"] = np.array(di["object-state"])
+        except:
+            pass
         axis = 0 if self.postprocess_visual_obs else 2
         # print(ret.keys())
         
@@ -485,39 +495,39 @@ class EnvRobosuite(EB.EnvBase):
                 if "eye_in_hand" not in camera_name:
                     all_pcds += pcd_o3d
 
-                #----------- get raw pcd without robot-----------------
-                seg = di[f'{camera_name}_segmentation_instance'][::-1][...,-1]
-                robot_id = [seg.max(), seg.max()-1, seg.max()-2]  # robot is always the last 3 ids
-                robot = (seg == robot_id[0]) | enlarge_mask(seg == robot_id[1], kernel_size=3) | (seg == robot_id[2])
-                # robot = ((seg == robot_id[0]) | (seg == robot_id[1]) | (seg == robot_id[2]))
+                # #----------- get raw pcd without robot-----------------
+                # seg = di[f'{camera_name}_segmentation_instance'][::-1][...,-1]
+                # robot_id = [seg.max(), seg.max()-1, seg.max()-2]  # robot is always the last 3 ids
+                # robot = (seg == robot_id[0]) | enlarge_mask(seg == robot_id[1], kernel_size=3) | (seg == robot_id[2])
+                # # robot = ((seg == robot_id[0]) | (seg == robot_id[1]) | (seg == robot_id[2]))
 
-                depth_no_robot = depth.copy()
-                rgb_no_robot = color.copy()
-                rgb_no_robot[64:] = 255
-                all_rgb_no_robot_dict[camera_name] = rgb_no_robot
-                # if "spaceview" in camera_name:
-                #     #resize SPACEVIEW_RGB_BACKGROUND
-                #     self.SPACEVIEW_RGB_BACKGROUND = cv2.resize(self.SPACEVIEW_RGB_BACKGROUND, (cam_width, cam_height), interpolation=cv2.INTER_LINEAR)
-                #     self.SPACEVIEW_DEPTH_BACKGROUND = cv2.resize(self.SPACEVIEW_DEPTH_BACKGROUND, (cam_width, cam_height), interpolation=cv2.INTER_LINEAR)
-                #     rgb_no_robot[robot] = self.SPACEVIEW_RGB_BACKGROUND[robot] 
-                #     depth_no_robot[robot] = self.SPACEVIEW_DEPTH_BACKGROUND[robot] 
-                #     ret['spaceview_image_no_robot'] = rgb_no_robot.copy()
-                #     ret['spaceview_depth_no_robot'] = depth_no_robot[...,None].copy()
-                # else:
-                #     depth_no_robot = depth.copy()
-                #     depth_no_robot[robot] = 5.0  # set robot pixels to a far distance
+                # depth_no_robot = depth.copy()
+                # rgb_no_robot = color.copy()
+                # rgb_no_robot[64:] = 255
+                # all_rgb_no_robot_dict[camera_name] = rgb_no_robot
+                # # if "spaceview" in camera_name:
+                # #     #resize SPACEVIEW_RGB_BACKGROUND
+                # #     self.SPACEVIEW_RGB_BACKGROUND = cv2.resize(self.SPACEVIEW_RGB_BACKGROUND, (cam_width, cam_height), interpolation=cv2.INTER_LINEAR)
+                # #     self.SPACEVIEW_DEPTH_BACKGROUND = cv2.resize(self.SPACEVIEW_DEPTH_BACKGROUND, (cam_width, cam_height), interpolation=cv2.INTER_LINEAR)
+                # #     rgb_no_robot[robot] = self.SPACEVIEW_RGB_BACKGROUND[robot] 
+                # #     depth_no_robot[robot] = self.SPACEVIEW_DEPTH_BACKGROUND[robot] 
+                # #     ret['spaceview_image_no_robot'] = rgb_no_robot.copy()
+                # #     ret['spaceview_depth_no_robot'] = depth_no_robot[...,None].copy()
+                # # else:
+                # #     depth_no_robot = depth.copy()
+                # #     depth_no_robot[robot] = 5.0  # set robot pixels to a far distance
 
-                depth_no_robot = depth.copy()
-                depth_no_robot[robot] = 5.0  # set robot pixels to a far distance
+                # depth_no_robot = depth.copy()
+                # depth_no_robot[robot] = 5.0  # set robot pixels to a far distance
 
-                mask = np.ones_like(depth_no_robot, dtype=bool)
-                pcd = depth2fgpcd(depth_no_robot, mask, cam_param)
-                trans_pcd = np.einsum('ij,jk->ik', pose, np.concatenate([pcd.T, np.ones((1, pcd.shape[0]))], axis=0))
-                trans_pcd = trans_pcd[:3, :].T
-                mask = (trans_pcd[:, 0] > workspace[0, 0]) * (trans_pcd[:, 0] < workspace[0, 1]) * (trans_pcd[:, 1] > workspace[1, 0]) * (trans_pcd[:, 1] < workspace[1, 1]) * (trans_pcd[:, 2] > workspace[2, 0]) * (trans_pcd[:, 2] < workspace[2, 1])
-                pcd_o3d = np2o3d(trans_pcd[mask], color.reshape(-1, 3)[mask].astype(np.float64) / 255)
-                if "eye_in_hand" not in camera_name:
-                    all_pcds_no_robot += pcd_o3d
+                # mask = np.ones_like(depth_no_robot, dtype=bool)
+                # pcd = depth2fgpcd(depth_no_robot, mask, cam_param)
+                # trans_pcd = np.einsum('ij,jk->ik', pose, np.concatenate([pcd.T, np.ones((1, pcd.shape[0]))], axis=0))
+                # trans_pcd = trans_pcd[:3, :].T
+                # mask = (trans_pcd[:, 0] > workspace[0, 0]) * (trans_pcd[:, 0] < workspace[0, 1]) * (trans_pcd[:, 1] > workspace[1, 0]) * (trans_pcd[:, 1] < workspace[1, 1]) * (trans_pcd[:, 2] > workspace[2, 0]) * (trans_pcd[:, 2] < workspace[2, 1])
+                # pcd_o3d = np2o3d(trans_pcd[mask], color.reshape(-1, 3)[mask].astype(np.float64) / 255)
+                # if "eye_in_hand" not in camera_name:
+                #     all_pcds_no_robot += pcd_o3d
 
             # get raw pcd with robot
             np_pcd = o3d2np(all_pcds)
